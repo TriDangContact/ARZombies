@@ -216,8 +216,7 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
             
             // actually shooting the ball
             ball.physicsBody?.applyForce(direction, asImpulse: true)
-//            ball.physicsBody?.velocity = SCNVector3(3.0, 0.0, 3.0)
-            decreaseHealth()
+//            decreaseHealth()
         }
     }
     
