@@ -17,11 +17,17 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     var currentScore = 0
     var currentHealth = 100
     var timer:Timer?
-    var difficulty = 3.0
-    var spawnDistance = 3
-    var spawnSideDistance:Float = 15.0
-    var spawnFrontDistance:Float = 3.0
-    let threshold:Float = 1.0
+    var isGameOver = false
+    
+    // difficulty settings
+    var spawnTimerDifficultyDivider = 3.0   // harder = lower
+    var scoreDifficultyMultiplier = 1   // harder = higher
+    var healthDifficultyMultiplier = 1  // harder = higher
+    var spawnDistanceDifficultyDivider = 3  // harder = lower
+    var spawnSideDistance:Float = 15.0   // harder = higher
+    var spawnFrontDistance:Float = 3.0  // harder = lower
+    let hitboxThresholdDifficulty:Float = 1.0 // harder = lower
+    
     let feedbackGenerator = UIImpactFeedbackGenerator(style: .heavy)
     
     // for tracking purposes
@@ -36,7 +42,12 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     var scoreNode: SCNNode?
     var healthNode: SCNNode?
     var backNode: SCNNode?
+    var backBtnNode: SKShapeNode = SKShapeNode()
+    var replayBtnNode: SKShapeNode = SKShapeNode()
+    var healthbar = HealthBar()
+    var gameHUDOverlay:GameHUDOverlay?
     
+    @IBOutlet weak var pauseBtn: UIButton!
     @IBOutlet weak var label1: UILabel!
     @IBOutlet weak var label2: UILabel!
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
@@ -56,6 +67,7 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         
         // Set the scene to the view
         sceneView.scene = scene
+        
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -81,6 +93,10 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         sceneView.session.pause()
         stopSpawnTimer()
     }
+    
+    
+    
+    // -------- SCENE LIFE CYCLE --------------
 
     // MARK: - ARSCNViewDelegate
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
@@ -134,22 +150,23 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     func renderer(_ renderer: SCNSceneRenderer, willRenderScene scene: SCNScene, atTime time: TimeInterval) {
         print("DB Checking zombie")
         if currentHealth == 0 {
-            print("DB: Game Over")
-            exitGame()
+            gameOver()
         }
         
         let (_, position) = getCameraDirectionAndPosition()
-        sceneView.scene.rootNode.childNodes
+        let spawned = sceneView.scene.rootNode.childNodes
             .filter({ $0.name == "spawnedNode" })
-            .forEach({
-                let distance = findDistance(from: $0.position, to: position)
-                if (distance < threshold) {
-                    print("DB: ZOMBIE NEARBY")
-                    feedbackGenerator.impactOccurred()
-                    $0.removeFromParentNode()
-                    decreaseHealth()
-                }
-            })
+        gameHUDOverlay?.zombiesCount = spawned.count
+        spawned.forEach({
+            let distance = findDistance(from: $0.position, to: position)
+            if (distance < hitboxThresholdDifficulty) {
+                print("DB: ZOMBIE NEARBY")
+                feedbackGenerator.impactOccurred()
+                decHealth()
+                decZombiesCount()
+                $0.removeFromParentNode()
+            }
+        })
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -171,7 +188,12 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
             // we can now show the game, after we have found a surface
             container.position = trackingPosition
             container.isHidden = false
+            pauseBtn.isHidden = false
+            sceneView.overlaySKScene = getGameHUDOverlay()
+            // MARK: convenient palce to test overlays
+//            gameOver()
             
+            // INITIALIZING ALL THE NODES IN THE SCENE
             directionalLightNode = container.childNode(withName: "directionalLight", recursively: false)
             ambientLightNode = container.childNode(withName: "ambientLight", recursively: false)
             
@@ -181,7 +203,6 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
             healthNode = container.childNode(withName: "healthLabel", recursively: false)
             setHealth(health: currentHealth)
 
-            
             backNode = container.childNode(withName: "backBtn", recursively: false)
             
             // allows us to handle collisions
@@ -192,8 +213,9 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
             
         } else {
             //PLAY STATE
-            // start the spawning
+            shootBall()
             
+            // handling touch for nodes inside of the ARScene
             let touch = touches.first as! UITouch
             if(touch.view == self.sceneView) {
                 let viewTouchLocation = touch.location(in: sceneView)
@@ -201,25 +223,13 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                         return
                     }
                 if let backNode = backNode, backNode == result.node {
-                    debugPrint("Back pressed")
-                    exitGame()
+                    gameOver()
                 }
             }
-            
-            let (direction, position) = getCameraDirectionAndPosition()
-            
-            let ball = createBall(position: position)
-            sceneView.scene.rootNode.addChildNode(ball)
-            
-            // telling the ball to wait for specified amount of time and remove itself from the scene
-            ball.runAction(SCNAction.sequence([SCNAction.wait(duration: 5.0), SCNAction.removeFromParentNode()]))
-            
-            // actually shooting the ball
-            ball.physicsBody?.applyForce(direction, asImpulse: true)
-//            decreaseHealth()
         }
     }
     
+    // Object Collision handling
     func physicsWorld(_ world: SCNPhysicsWorld, didBegin contact: SCNPhysicsContact) {
         // we get both objects involved in the collision, add scores, and remove them
         let ball = contact.nodeA.physicsBody!.contactTestBitMask == 3 ? contact.nodeA : contact.nodeB
@@ -235,6 +245,7 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         incScore()
         ball.removeFromParentNode()
         object.removeFromParentNode()
+        decZombiesCount()
     }
     
 /*
@@ -249,7 +260,6 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     func session(_ session: ARSession, didFailWithError error: Error) {
         // Present an error message to the user
         saveScore()
-        
     }
     
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
@@ -263,7 +273,6 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         
         directionalLightNode?.light?.intensity = lightEstimate.ambientIntensity
         ambientLightNode?.light?.intensity = lightEstimate.ambientIntensity * 0.5
-        
     }
     
     func sessionWasInterrupted(_ session: ARSession) {
@@ -274,6 +283,59 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     func sessionInterruptionEnded(_ session: ARSession) {
         // Reset tracking and/or remove existing anchors if consistent tracking is required
         
+    }
+    
+    // -------- END SCENE LIFE CYCLE ---------
+    
+    
+    // ------- START OVERLAYS METHODS ---------
+    func getGameHUDOverlay() -> SKScene {
+        let viewHeight = sceneView.bounds.size.height
+        let viewWidth = sceneView.bounds.size.width
+        gameHUDOverlay = GameHUDOverlay(size: CGSize(width: viewWidth, height: viewHeight))
+        healthbar = gameHUDOverlay!.healthbar
+        
+        gameHUDOverlay!.isUserInteractionEnabled = false
+        gameHUDOverlay!.viewController = self
+        return gameHUDOverlay!
+    }
+    
+    func getGamePausedOverlay() -> SKScene {
+        let viewHeight = sceneView.bounds.size.height
+        let viewWidth = sceneView.bounds.size.width
+        let overlay = GamePausedOverlay(size: CGSize(width: viewWidth, height: viewHeight))
+        
+        overlay.score.text = "\(currentScore)"
+        overlay.isUserInteractionEnabled = true
+        overlay.viewController = self
+        return overlay
+    }
+    
+    func getGameOverOverlay() -> SKScene {
+        let viewHeight = sceneView.bounds.size.height
+        let viewWidth = sceneView.bounds.size.width
+        let overlay = GameOverOverlay(size: CGSize(width: viewWidth, height: viewHeight))
+        
+        overlay.score.text = "\(currentScore)"
+        overlay.isUserInteractionEnabled = true
+        overlay.viewController = self
+        return overlay
+    }
+    // ------- END OVERLAYS METHODS ---------
+    
+    
+    // ------- START GAME BUILDING ---------
+    func shootBall() {
+        let (direction, position) = getCameraDirectionAndPosition()
+                    
+        let ball = createBall(position: position)
+        sceneView.scene.rootNode.addChildNode(ball)
+        
+        // telling the ball to wait for specified amount of time and remove itself from the scene
+        ball.runAction(SCNAction.sequence([SCNAction.wait(duration: 5.0), SCNAction.removeFromParentNode()]))
+        
+        // actually shooting the ball
+        ball.physicsBody?.applyForce(direction, asImpulse: true)
     }
     
     @objc func spawnRandomNodes(){
@@ -297,34 +359,19 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                 
                 // ensure that we spawn objects at a certain distance away from the player
                 if randomDistanceX < 0 {
-                    randomDistanceX = randomDistanceX - Float(spawnDistance)
+                    randomDistanceX = randomDistanceX - Float(spawnDistanceDifficultyDivider)
                 } else {
-                    randomDistanceX = randomDistanceX + Float(spawnDistance)
+                    randomDistanceX = randomDistanceX + Float(spawnDistanceDifficultyDivider)
                 }
                 
                 if randomDistanceZ < 0 {
-                    randomDistanceZ = randomDistanceZ - Float(spawnDistance)
+                    randomDistanceZ = randomDistanceZ - Float(spawnDistanceDifficultyDivider)
                 } else {
-                    randomDistanceZ = randomDistanceZ + Float(spawnDistance)
+                    randomDistanceZ = randomDistanceZ + Float(spawnDistanceDifficultyDivider)
                 }
                 
-                let spawnedNode = SCNNode()
-                let nodeGeometry = SCNCylinder(radius: 0.4, height: 2)
-                
-                // configure the shading model that we want to use
-                nodeGeometry.firstMaterial?.lightingModel = SCNMaterial.LightingModel.physicallyBased
-                nodeGeometry.firstMaterial?.diffuse.contents = colourArray[randomColor]
-               
-                // place it in the node
-                spawnedNode.geometry = nodeGeometry
-                spawnedNode.name = "spawnedNode"
-                
-                // configure the physics of the node for collision detection, using the same shape of the object we used
-                spawnedNode.physicsBody = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape(geometry: nodeGeometry, options:  [SCNPhysicsShape.Option.scale: scale]))
-                spawnedNode.physicsBody?.categoryBitMask = 1
-                spawnedNode.physicsBody?.contactTestBitMask = 0
-                spawnedNode.physicsBody?.collisionBitMask = -1
-
+                // spawn a node
+                let spawnedNode = SpawnedSCNNode()
                 // specify random position where the node should be placed
                 let randomVector =  SCNVector3(randomDistanceX, yPosition, randomDistanceZ)
 
@@ -332,10 +379,11 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                 spawnedNode.position = randomVector
                 spawnedNode.scale = scale
                 
-                moveNodeTowardsCamera(node: spawnedNode)
+                moveNodeTowardsPlayer(node: spawnedNode)
                 
                 // add to scene
                 sceneView.scene.rootNode.addChildNode(spawnedNode)
+                incZombiesCount()
             }
         }
     }
@@ -362,22 +410,19 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     }
     
     // need to implement Bresenham's line
-    func moveNodeTowardsCamera(node: SCNNode) {
-        // move the node towards the camera
-        print("DB---------------------------------------")
+    func moveNodeTowardsPlayer(node: SCNNode) {
         let (_, position) = getCameraDirectionAndPosition()
-        print("Camera Position: \(position)")
+        
         lookAt(node: node, target: position)
+        
         let slope = findSlope(x1: node.position.x, y1: node.position.y, x2: position.x, y2: position.y)
         let distance = findDistance(from: node.position, to: position)
         let delta = slope / distance
-        print("DB Start: \(node.position), End: \(position)")
-        print("DB Slope: \(slope), Distance: \(distance), Delta: \(delta)")
-        print("DB---------------------------------------")
+        
         let moveAmount = SCNVector3(x: delta, y: 0.0, z: slope*delta)
         
-        let move = SCNAction.move(by: moveAmount, duration: 1.0)
-        let repeatForever = SCNAction.repeatForever(move)
+        let moveAction = SCNAction.move(by: moveAmount, duration: 1.0)
+        let repeatForever = SCNAction.repeatForever(moveAction)
         node.runAction(repeatForever)
     }
     
@@ -409,6 +454,10 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         return sqrt(pow((start.x - end.x), 2) + pow((start.y - end.y), 2))
     }
     
+    // ------- END GAME BUILDING ---------
+    
+    
+    // ------- START HELPER METHODS ---------
     func removeLoadingScreen() {
         // make call on main thread
 //        DispatchQueue.main.async {
@@ -418,6 +467,35 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
 //        }
     }
     
+    @IBAction func pausePressed(_ sender: UIButton) {
+        pauseBtn.isHidden = true
+        pauseGame()
+        
+    }
+    func gameOver() {
+        saveScore()
+        stopSpawnTimer()
+        sceneView.overlaySKScene = getGameOverOverlay()
+        sceneView.session.pause()
+    }
+    
+    func pauseGame() {
+        saveScore()
+        stopSpawnTimer()
+//        sceneView.pause(self)
+        sceneView.scene.isPaused = true
+//        sceneView.session.pause()
+        sceneView.overlaySKScene = getGamePausedOverlay()
+    }
+    
+    func resumeGame() {
+        startSpawnTimer()
+        sceneView.overlaySKScene = gameHUDOverlay
+        pauseBtn.isHidden = false
+        sceneView.scene.isPaused = false
+//        sceneView.session.run(sceneView.session.configuration!)
+    }
+    
     func exitGame() {
         DispatchQueue.main.async {
             self.performSegue(withIdentifier: "GameToMenu", sender: self)
@@ -425,12 +503,20 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     }
     
     func incScore() {
-        currentScore+=1
+        currentScore += scoreDifficultyMultiplier
         setScore(score: currentScore)
     }
     
-    func decreaseHealth() {
-        currentHealth -= 1
+    func incZombiesCount() {
+        gameHUDOverlay?.zombiesCount += 1
+    }
+    
+    func decZombiesCount() {
+        gameHUDOverlay?.zombiesCount -= 1
+    }
+    
+    func decHealth() {
+        currentHealth -= healthDifficultyMultiplier
         setHealth(health: currentHealth)
     }
     
@@ -446,6 +532,7 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
             let healthText = parent.geometry as! SCNText
             healthText.string = "Health: \(health)"
         }
+        healthbar.progress = CGFloat(Float(health)/100)
     }
     
     func saveScore() {
@@ -453,12 +540,16 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     }
     
     func startSpawnTimer() {
-        timer = Timer.scheduledTimer(timeInterval: difficulty, target: self, selector: #selector(spawnRandomNodes), userInfo: nil, repeats: true)
+        timer = Timer.scheduledTimer(timeInterval: spawnTimerDifficultyDivider, target: self, selector: #selector(spawnRandomNodes), userInfo: nil, repeats: true)
     }
     
     func stopSpawnTimer() {
         timer?.invalidate()
     }
+    
+    // ------- END HELPER METHODS ---------
+    
+    
 }
 
 

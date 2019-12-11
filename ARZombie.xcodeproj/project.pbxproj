@@ -19,6 +19,13 @@
 		0BC8A031239FA124006A2B34 /* Explosion.sks in Resources */ = {isa = PBXBuildFile; fileRef = 0BC8A030239FA124006A2B34 /* Explosion.sks */; };
 		0BC8A034239FA4AB006A2B34 /* spark.png in Resources */ = {isa = PBXBuildFile; fileRef = 0BC8A032239FA4AB006A2B34 /* spark.png */; };
 		0BC8A035239FA4AB006A2B34 /* Explosion.scnp in Resources */ = {isa = PBXBuildFile; fileRef = 0BC8A033239FA4AB006A2B34 /* Explosion.scnp */; };
+		0BC8A03723A09130006A2B34 /* BallNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BC8A03623A09130006A2B34 /* BallNode.swift */; };
+		0BC8A03923A096B8006A2B34 /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BC8A03823A096B8006A2B34 /* GameView.swift */; };
+		0BC8A03B23A0BA8D006A2B34 /* HealthBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BC8A03A23A0BA8D006A2B34 /* HealthBar.swift */; };
+		0BC8A03D23A106D5006A2B34 /* GameOverOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BC8A03C23A106D5006A2B34 /* GameOverOverlay.swift */; };
+		0BC8A03F23A11115006A2B34 /* GameHUDOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BC8A03E23A11115006A2B34 /* GameHUDOverlay.swift */; };
+		0BC8A04223A11FD8006A2B34 /* GamePausedOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BC8A04123A11FD8006A2B34 /* GamePausedOverlay.swift */; };
+		0BC8A04423A1391E006A2B34 /* SpawnedSCNNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BC8A04323A1391E006A2B34 /* SpawnedSCNNode.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +64,13 @@
 		0BC8A030239FA124006A2B34 /* Explosion.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = Explosion.sks; sourceTree = "<group>"; };
 		0BC8A032239FA4AB006A2B34 /* spark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = spark.png; sourceTree = "<group>"; };
 		0BC8A033239FA4AB006A2B34 /* Explosion.scnp */ = {isa = PBXFileReference; lastKnownFileType = file.scp; path = Explosion.scnp; sourceTree = "<group>"; };
+		0BC8A03623A09130006A2B34 /* BallNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallNode.swift; sourceTree = "<group>"; };
+		0BC8A03823A096B8006A2B34 /* GameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
+		0BC8A03A23A0BA8D006A2B34 /* HealthBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthBar.swift; sourceTree = "<group>"; };
+		0BC8A03C23A106D5006A2B34 /* GameOverOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameOverOverlay.swift; sourceTree = "<group>"; };
+		0BC8A03E23A11115006A2B34 /* GameHUDOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameHUDOverlay.swift; sourceTree = "<group>"; };
+		0BC8A04123A11FD8006A2B34 /* GamePausedOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePausedOverlay.swift; sourceTree = "<group>"; };
+		0BC8A04323A1391E006A2B34 /* SpawnedSCNNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpawnedSCNNode.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -113,6 +127,13 @@
 				0BC89FFE239F0DF1006A2B34 /* art.scnassets */,
 				0BC8A000239F0DF1006A2B34 /* GameViewController.swift */,
 				0BC8A02C239F736E006A2B34 /* MenuViewController.swift */,
+				0BC8A03623A09130006A2B34 /* BallNode.swift */,
+				0BC8A04323A1391E006A2B34 /* SpawnedSCNNode.swift */,
+				0BC8A03E23A11115006A2B34 /* GameHUDOverlay.swift */,
+				0BC8A03C23A106D5006A2B34 /* GameOverOverlay.swift */,
+				0BC8A04123A11FD8006A2B34 /* GamePausedOverlay.swift */,
+				0BC8A03823A096B8006A2B34 /* GameView.swift */,
+				0BC8A03A23A0BA8D006A2B34 /* HealthBar.swift */,
 				0BC8A002239F0DF1006A2B34 /* Main.storyboard */,
 				0BC8A005239F0DF3006A2B34 /* Assets.xcassets */,
 				0BC8A007239F0DF3006A2B34 /* LaunchScreen.storyboard */,
@@ -276,8 +297,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				0BC8A001239F0DF1006A2B34 /* GameViewController.swift in Sources */,
+				0BC8A04423A1391E006A2B34 /* SpawnedSCNNode.swift in Sources */,
+				0BC8A03D23A106D5006A2B34 /* GameOverOverlay.swift in Sources */,
+				0BC8A03B23A0BA8D006A2B34 /* HealthBar.swift in Sources */,
 				0BC8A02D239F736E006A2B34 /* MenuViewController.swift in Sources */,
+				0BC8A03F23A11115006A2B34 /* GameHUDOverlay.swift in Sources */,
+				0BC8A03723A09130006A2B34 /* BallNode.swift in Sources */,
+				0BC8A04223A11FD8006A2B34 /* GamePausedOverlay.swift in Sources */,
 				0BC89FFD239F0DF1006A2B34 /* AppDelegate.swift in Sources */,
+				0BC8A03923A096B8006A2B34 /* GameView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
