@@ -400,6 +400,9 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                 
                 moveNodeTowardsPlayer(node: spawnedNode)
                 
+                // need to clean up spawned nodes if it's been too long since it spawned and haven't been destroyed yet
+                spawnedNode.runAction(SCNAction.sequence([SCNAction.wait(duration: 20.0), SCNAction.removeFromParentNode()]), completionHandler: decZombiesCount)
+                
                 let (_, position) = getCameraDirectionAndPosition()
                 lookAt(node: spawnedNode, target: position)
                 
@@ -538,6 +541,7 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     }
     func gameOver() {
         saveScore()
+        pauseBtn.isHidden = true
         stopSpawnTimer()
         sceneView.overlaySKScene = getGameOverOverlay()
         sceneView.session.pause()

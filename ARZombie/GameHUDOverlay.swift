@@ -79,7 +79,7 @@ class GameHUDOverlay: SKScene {
         rootNode.addChild(hpLabel)
         
         zombiesLabel = SKLabelNode(text: "Zombies Left: \(zombiesCount)")
-        zombiesLabel.horizontalAlignmentMode = .right
+        zombiesLabel.horizontalAlignmentMode = .center
         zombiesLabel.verticalAlignmentMode = .center
         zombiesLabel.position = CGPoint(x: position.x, y: position.y - zombiesLabel.frame.height)
         zombiesLabel.fontColor = .orange
@@ -89,7 +89,7 @@ class GameHUDOverlay: SKScene {
         rootNode.addChild(zombiesLabel)
         
         scoreLabel = SKLabelNode(text: "Score: \(score)")
-        scoreLabel.horizontalAlignmentMode = .right
+        scoreLabel.horizontalAlignmentMode = .center
         scoreLabel.verticalAlignmentMode = .center
         scoreLabel.position = CGPoint(x: position.x, y: position.y - zombiesLabel.frame.height - scoreLabel.frame.height)
         scoreLabel.fontColor = .orange
