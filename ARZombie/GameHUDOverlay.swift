@@ -15,12 +15,19 @@ class GameHUDOverlay: SKScene {
     var rootNode = SKNode()
     var healthbar = HealthBar()
     var background = SKShapeNode()
-    var label = SKLabelNode()
+    var hpLabel = SKLabelNode()
+    var scoreLabel = SKLabelNode()
     var healthContainer = SKShapeNode()
+    var scoreContainer = SKNode()
     var zombiesLabel = SKLabelNode()
     var zombiesCount:Int = 0 {
         didSet {
             updateZombieLabel()
+        }
+    }
+    var score:Int = 0 {
+        didSet {
+            updateScoreLabel()
         }
     }
     
@@ -61,28 +68,18 @@ class GameHUDOverlay: SKScene {
         healthContainer.lineWidth = 5
         rootNode.addChild(healthContainer)
         
-        label = SKLabelNode(text: "HP")
-        label.horizontalAlignmentMode = .center
-        label.verticalAlignmentMode = .center
-        label.position = position
-        label.fontColor = .orange
-        label.fontName = "AmericanTypewriter-Bold"
-        label.fontSize = 12
-        label.zPosition = 3
-        rootNode.addChild(label)
-        
-        label = SKLabelNode(text: "HP")
-        label.horizontalAlignmentMode = .center
-        label.verticalAlignmentMode = .center
-        label.position = position
-        label.fontColor = .orange
-        label.fontName = "AmericanTypewriter-Bold"
-        label.fontSize = 12
-        label.zPosition = 3
-        rootNode.addChild(label)
+        hpLabel = SKLabelNode(text: "HP")
+        hpLabel.horizontalAlignmentMode = .center
+        hpLabel.verticalAlignmentMode = .center
+        hpLabel.position = position
+        hpLabel.fontColor = .orange
+        hpLabel.fontName = "AmericanTypewriter-Bold"
+        hpLabel.fontSize = 12
+        hpLabel.zPosition = 3
+        rootNode.addChild(hpLabel)
         
         zombiesLabel = SKLabelNode(text: "Zombies Left: \(zombiesCount)")
-        zombiesLabel.horizontalAlignmentMode = .center
+        zombiesLabel.horizontalAlignmentMode = .right
         zombiesLabel.verticalAlignmentMode = .center
         zombiesLabel.position = CGPoint(x: position.x, y: position.y - zombiesLabel.frame.height)
         zombiesLabel.fontColor = .orange
@@ -90,6 +87,20 @@ class GameHUDOverlay: SKScene {
         zombiesLabel.fontSize = 12
         zombiesLabel.zPosition = 3
         rootNode.addChild(zombiesLabel)
+        
+        scoreLabel = SKLabelNode(text: "Score: \(score)")
+        scoreLabel.horizontalAlignmentMode = .right
+        scoreLabel.verticalAlignmentMode = .center
+        scoreLabel.position = CGPoint(x: position.x, y: position.y - zombiesLabel.frame.height - scoreLabel.frame.height)
+        scoreLabel.fontColor = .orange
+        scoreLabel.fontName = "AmericanTypewriter-Bold"
+        scoreLabel.fontSize = 12
+        scoreLabel.zPosition = 3
+        rootNode.addChild(scoreLabel)
+        
+        scoreContainer = SKNode()
+        scoreContainer.position = CGPoint(x: size.width/2, y: size.height/2)
+        rootNode.addChild(scoreContainer)
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -120,5 +131,58 @@ class GameHUDOverlay: SKScene {
     
     func updateZombieLabel() {
         zombiesLabel.text = "Zombies Left: \(zombiesCount)"
+    }
+    
+    func updateScoreLabel() {
+        scoreLabel.text = "Score: \(score)"
+    }
+    
+    func incScore(score: Int) {
+        self.score += score
+        let scoreNode = SKLabelNode(text: "+ \(score)")
+        scoreNode.horizontalAlignmentMode = .center
+        scoreNode.verticalAlignmentMode = .center
+        scoreNode.position = CGPoint(x: 0.0, y: 0.0)
+        scoreNode.fontColor = .yellow
+        scoreNode.fontName = "AmericanTypewriter-Bold"
+        scoreNode.fontSize = 30
+        scoreNode.zPosition = 2
+        
+        // animation
+        let fade = SKAction.fadeAlpha(to: 0, duration: 4)
+        let move = SKAction.moveBy(x: CGFloat(80.0), y: CGFloat(80.0), duration: 4.0)
+        scoreNode.run(fade)
+        scoreNode.run(move)
+        
+        // cleanup
+        let wait = SKAction.wait(forDuration: 4)
+        let remove = SKAction.removeFromParent()
+        let sequence = SKAction.sequence([wait,remove])
+        scoreNode.run(sequence)
+        scoreContainer.addChild(scoreNode)
+    }
+    
+    func decHealth(health: Int) {
+        let healthNode = SKLabelNode(text: "- \(health)")
+        healthNode.horizontalAlignmentMode = .center
+        healthNode.verticalAlignmentMode = .center
+        healthNode.position = CGPoint(x: 0.0, y: 0.0)
+        healthNode.fontColor = .red
+        healthNode.fontName = "AmericanTypewriter-Bold"
+        healthNode.fontSize = 30
+        healthNode.zPosition = 2
+        
+        // animation
+        let fade = SKAction.fadeAlpha(to: 0, duration: 4)
+        let move = SKAction.moveBy(x: CGFloat(80.0), y: CGFloat(-80.0), duration: 4.0)
+        healthNode.run(fade)
+        healthNode.run(move)
+        
+        // cleanup
+        let wait = SKAction.wait(forDuration: 4)
+        let remove = SKAction.removeFromParent()
+        let sequence = SKAction.sequence([wait,remove])
+        healthNode.run(sequence)
+        scoreContainer.addChild(healthNode)
     }
 }

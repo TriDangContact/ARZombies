@@ -72,14 +72,8 @@
                             <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" animating="YES" style="whiteLarge" translatesAutoresizingMaskIntoConstraints="NO" id="KXU-ER-3c1">
                                 <rect key="frame" x="188.5" y="429.5" width="37" height="37"/>
                             </activityIndicatorView>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Resurrecting" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="EqT-hX-vTc">
-                                <rect key="frame" x="122.5" y="333" width="169" height="39"/>
-                                <fontDescription key="fontDescription" name="MarkerFelt-Wide" family="Marker Felt" pointSize="30"/>
-                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <nil key="highlightedColor"/>
-                            </label>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Zombies..." textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="I2a-6e-vDq">
-                                <rect key="frame" x="141" y="375" width="132" height="39"/>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Resurrecting Zombies..." textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="I2a-6e-vDq">
+                                <rect key="frame" x="53" y="375" width="308" height="39"/>
                                 <fontDescription key="fontDescription" name="MarkerFelt-Wide" family="Marker Felt" pointSize="30"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <nil key="highlightedColor"/>
@@ -95,19 +89,27 @@
                                     <action selector="pausePressed:" destination="BV1-FR-VrT" eventType="touchUpInside" id="2NW-aG-nC3"/>
                                 </connections>
                             </button>
+                            <imageView hidden="YES" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="ARZombie Instructions2" translatesAutoresizingMaskIntoConstraints="NO" id="BVz-RL-7CW">
+                                <rect key="frame" x="71.5" y="407.5" width="271" height="81"/>
+                            </imageView>
+                            <imageView hidden="YES" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="ARZombie Instructions" translatesAutoresizingMaskIntoConstraints="NO" id="RGg-Yy-fuM">
+                                <rect key="frame" x="71.5" y="347" width="271" height="202"/>
+                            </imageView>
                         </subviews>
                         <color key="backgroundColor" systemColor="systemOrangeColor" red="1" green="0.58431372550000005" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
                             <constraint firstItem="KXU-ER-3c1" firstAttribute="top" secondItem="I2a-6e-vDq" secondAttribute="bottom" constant="15.5" id="04i-vU-ubz"/>
-                            <constraint firstItem="I2a-6e-vDq" firstAttribute="top" secondItem="EqT-hX-vTc" secondAttribute="bottom" constant="3" id="GiY-lv-7zB"/>
+                            <constraint firstItem="BVz-RL-7CW" firstAttribute="centerY" secondItem="U0K-SW-4ec" secondAttribute="centerY" id="CUS-t1-oRz"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="leading" secondItem="fQZ-KI-GVf" secondAttribute="leading" id="GsS-dJ-CKf"/>
                             <constraint firstItem="KXU-ER-3c1" firstAttribute="centerX" secondItem="U0K-SW-4ec" secondAttribute="centerX" id="Hch-Fv-snx"/>
+                            <constraint firstItem="RGg-Yy-fuM" firstAttribute="centerX" secondItem="U0K-SW-4ec" secondAttribute="centerX" id="Ij0-lI-DXc"/>
+                            <constraint firstItem="RGg-Yy-fuM" firstAttribute="centerY" secondItem="U0K-SW-4ec" secondAttribute="centerY" id="LFp-5b-Sgz"/>
                             <constraint firstItem="I2a-6e-vDq" firstAttribute="centerX" secondItem="U0K-SW-4ec" secondAttribute="centerX" id="OH0-oo-5Nv"/>
-                            <constraint firstItem="EqT-hX-vTc" firstAttribute="centerX" secondItem="U0K-SW-4ec" secondAttribute="centerX" id="ScB-PF-SJL"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="bottom" secondItem="fQZ-KI-GVf" secondAttribute="bottom" id="VpT-BR-CcM"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="trailing" secondItem="fQZ-KI-GVf" secondAttribute="trailing" id="XyZ-9z-H8e"/>
                             <constraint firstItem="fQZ-KI-GVf" firstAttribute="bottom" secondItem="O1I-dy-tk0" secondAttribute="bottom" constant="23" id="fe7-p8-O34"/>
                             <constraint firstItem="O1I-dy-tk0" firstAttribute="centerX" secondItem="U0K-SW-4ec" secondAttribute="centerX" id="iGK-tL-KY2"/>
+                            <constraint firstItem="BVz-RL-7CW" firstAttribute="centerX" secondItem="U0K-SW-4ec" secondAttribute="centerX" id="pKP-Xe-kla"/>
                             <constraint firstItem="BrB-h1-WRS" firstAttribute="top" secondItem="U0K-SW-4ec" secondAttribute="top" id="rJc-2c-zQA"/>
                             <constraint firstItem="KXU-ER-3c1" firstAttribute="centerY" secondItem="U0K-SW-4ec" secondAttribute="centerY" id="wpw-nx-A75"/>
                         </constraints>
@@ -116,10 +118,11 @@
                     <navigationItem key="navigationItem" id="IWB-T3-Vps"/>
                     <connections>
                         <outlet property="activityIndicator" destination="KXU-ER-3c1" id="5ze-n6-bAB"/>
-                        <outlet property="label1" destination="EqT-hX-vTc" id="CPH-Es-70Z"/>
-                        <outlet property="label2" destination="I2a-6e-vDq" id="u97-NT-8ed"/>
+                        <outlet property="howToPlayInstruction" destination="RGg-Yy-fuM" id="hTb-Fe-Yxw"/>
+                        <outlet property="loadingScreenLabel" destination="I2a-6e-vDq" id="0tO-AJ-FSW"/>
                         <outlet property="pauseBtn" destination="O1I-dy-tk0" id="RpE-uy-d26"/>
                         <outlet property="sceneView" destination="BrB-h1-WRS" id="5nT-qQ-ynl"/>
+                        <outlet property="tapToShootInstruction" destination="BVz-RL-7CW" id="r3V-AC-FLW"/>
                         <segue destination="WGy-R7-Nv6" kind="unwind" identifier="GameToMenu" unwindAction="unwindGameWithSegue:" id="xAi-K0-NLv"/>
                     </connections>
                 </viewController>
@@ -130,6 +133,8 @@
         </scene>
     </scenes>
     <resources>
+        <image name="ARZombie Instructions" width="271" height="202"/>
+        <image name="ARZombie Instructions2" width="271" height="81"/>
         <image name="pause" width="256" height="256"/>
     </resources>
 </document>

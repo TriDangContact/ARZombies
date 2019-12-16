@@ -17,17 +17,17 @@ final class BallNode: SCNNode {
         ball.firstMaterial?.diffuse.contents = UIImage(named: "ball.png")
 
         // create the node for the ball
-        let ballNode = SCNNode(geometry: ball)
+        geometry = ball
 
         // set the position of the node
-        ballNode.position = SCNVector3(x: 0, y: 0.5, z: 0)
+        position = position
 
         // configure physics of the node so that it can handle collision properly
-        ballNode.physicsBody = SCNPhysicsBody(type: .dynamic, shape: nil)
-        ballNode.physicsBody?.categoryBitMask = 3
-        ballNode.physicsBody?.contactTestBitMask = 1
-        ballNode.physicsBody?.isAffectedByGravity = false
-        ballNode.physicsBody?.damping = 0
+        physicsBody = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape(geometry: ball, options: nil))
+        physicsBody?.categoryBitMask = 3
+        physicsBody?.contactTestBitMask = 1
+        physicsBody?.isAffectedByGravity = false
+        physicsBody?.damping = 0
     }
     
     required init?(coder aDecoder: NSCoder) {

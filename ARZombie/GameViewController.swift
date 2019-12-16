@@ -9,6 +9,8 @@
 import UIKit
 import SceneKit
 import ARKit
+import ModelIO
+import SceneKit.ModelIO
 
 class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate, SCNPhysicsContactDelegate {
 
@@ -27,6 +29,7 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     var spawnSideDistance:Float = 15.0   // harder = higher
     var spawnFrontDistance:Float = 3.0  // harder = lower
     let hitboxThresholdDifficulty:Float = 1.0 // harder = lower
+    let spawnedMovementDifficultyDivider:Float = 10000.0    // harder = lower, movement amount is extremely tiny, need to divide by amount to make difference noticeable
     
     let feedbackGenerator = UIImpactFeedbackGenerator(style: .heavy)
     
@@ -47,9 +50,10 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     var healthbar = HealthBar()
     var gameHUDOverlay:GameHUDOverlay?
     
+    @IBOutlet weak var howToPlayInstruction: UIImageView!
+    @IBOutlet weak var tapToShootInstruction: UIImageView!
     @IBOutlet weak var pauseBtn: UIButton!
-    @IBOutlet weak var label1: UILabel!
-    @IBOutlet weak var label2: UILabel!
+    @IBOutlet weak var loadingScreenLabel: UILabel!
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     @IBOutlet var sceneView: ARSCNView!
     
@@ -101,7 +105,7 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     // MARK: - ARSCNViewDelegate
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
         
-        // once our AR view has been loaded, we can remove the loading screen
+        // once our AR view has been loaded, we can remove the loading screen and display instructions
         removeLoadingScreen()
         
         // do we need to find a surface?
@@ -122,10 +126,13 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         
         // once we have a hit, we convert it to 3D position
         let translation =  SCNMatrix4(result.worldTransform)
+        
         let position = SCNVector3Make(translation.m41, translation.m42, translation.m43)
         
         // if we don't have a tracker yet, we need to create one
         if trackerNode == nil {
+            displayHowToPlayInstructions()
+            
             possiblePlane = SCNPlane(width: 0.5, height: 0.5)
             guard let plane = possiblePlane else {
                 return
@@ -137,6 +144,8 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
             trackerNode = SCNNode(geometry: plane)
             // make it lay flat
             trackerNode?.eulerAngles.x = -.pi * 0.5
+//            let (_, position) = getCameraDirectionAndPosition()
+//            lookAt(node: trackerNode!, target: position)
             
             // add it to the scene
             self.sceneView.scene.rootNode.addChildNode(self.trackerNode!)
@@ -178,6 +187,9 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                 return
             }
             
+            hideHowToPlayInstructions()
+            displayTapToShootInstructions()
+            
             // get the position from the tracker and remove the tracker since we no longer need it
             let trackingPosition = trackerNode!.position
             trackerNode?.removeFromParentNode()
@@ -190,7 +202,7 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
             container.isHidden = false
             pauseBtn.isHidden = false
             sceneView.overlaySKScene = getGameHUDOverlay()
-            // MARK: convenient palce to test overlays
+            // MARK: convenient place to test overlays
 //            gameOver()
             
             // INITIALIZING ALL THE NODES IN THE SCENE
@@ -213,6 +225,7 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
             
         } else {
             //PLAY STATE
+            hideTapToShootInstructions()
             shootBall()
             
             // handling touch for nodes inside of the ARScene
@@ -328,7 +341,8 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     func shootBall() {
         let (direction, position) = getCameraDirectionAndPosition()
                     
-        let ball = createBall(position: position)
+        let ball = BallNode()
+        ball.position = position
         sceneView.scene.rootNode.addChildNode(ball)
         
         // telling the ball to wait for specified amount of time and remove itself from the scene
@@ -349,7 +363,7 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
             }
             let yPosition = tracker.position.y
             
-            let scale = SCNVector3(0.25, 0.25, 0.25)
+            var scale = SCNVector3(0.25, 0.25, 0.25)
             
             // create x number of objects with different colors and position
             for _ in 0...number{
@@ -370,16 +384,24 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
                     randomDistanceZ = randomDistanceZ + Float(spawnDistanceDifficultyDivider)
                 }
                 
-                // spawn a node
-                let spawnedNode = SpawnedSCNNode()
                 // specify random position where the node should be placed
                 let randomVector =  SCNVector3(randomDistanceX, yPosition, randomDistanceZ)
+                
+                // spawn a node
+                let spawnedNode = SpawnedSCNNode()
+                
+                // MARK: testing spawning of zombie 3D model
+//                scale = SCNVector3(x: 0.05, y: 0.05, z: 0.05)
+//                let spawnedNode = createZombie(scale: scale)
 
-                // set node's positon
+//                // set node's positon
                 spawnedNode.position = randomVector
                 spawnedNode.scale = scale
                 
                 moveNodeTowardsPlayer(node: spawnedNode)
+                
+                let (_, position) = getCameraDirectionAndPosition()
+                lookAt(node: spawnedNode, target: position)
                 
                 // add to scene
                 sceneView.scene.rootNode.addChildNode(spawnedNode)
@@ -388,39 +410,57 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         }
     }
     
-    func createBall(position: SCNVector3) -> SCNNode {
-        // create the ball
-        let ball = SCNSphere(radius: 0.05)
-        ball.firstMaterial?.diffuse.contents = UIImage(named: "ball.png")
-
-        // create the node for the ball
-        let ballNode = SCNNode(geometry: ball)
-
-        // set the position of the node
-        ballNode.position = position
-
-        // configure physics of the node so that it can handle collision properly
-        ballNode.physicsBody = SCNPhysicsBody(type: .dynamic, shape: nil)
-        ballNode.physicsBody?.categoryBitMask = 3
-        ballNode.physicsBody?.contactTestBitMask = 1
-        ballNode.physicsBody?.isAffectedByGravity = false
-        ballNode.physicsBody?.damping = 0
-
-        return ballNode
+    // MARK: IN PROGRESS
+    // MARK: BUG: texture not showing up, model not facing player, model not moving towards player
+    func createZombie(scale: SCNVector3) -> SCNNode{
+//         load our 3D object
+//        let scene = SCNScene(named: "art.scnassets/steve.dae")!
+        guard let steve = container.childNode(withName: "steve", recursively: false) else {
+            print("DB: unable to load zombie")
+            return SCNNode()
+        }
+        
+        guard let zombie = steve.childNode(withName: "container", recursively: false) else {
+            return SCNNode()
+        }
+        
+        let node = zombie.clone()
+        node.isHidden = false
+//        node.addChildNode(container)
+                
+        // configure the physics of the node for collision detection, using the same shape of the object we used
+        node.physicsBody = SCNPhysicsBody(type: .dynamic, shape: nil)
+        node.physicsBody?.categoryBitMask = 1
+        node.physicsBody?.contactTestBitMask = 0
+        node.physicsBody?.collisionBitMask = -1
+        
+        node.name = "spawnedNode"
+        
+        return node
     }
     
     // need to implement Bresenham's line
     func moveNodeTowardsPlayer(node: SCNNode) {
         let (_, position) = getCameraDirectionAndPosition()
         
-        lookAt(node: node, target: position)
-        
         let slope = findSlope(x1: node.position.x, y1: node.position.y, x2: position.x, y2: position.y)
         let distance = findDistance(from: node.position, to: position)
         let delta = slope / distance
         
-        let moveAmount = SCNVector3(x: delta, y: 0.0, z: slope*delta)
-        
+//        //Aim
+//        let dx = position.x - node.position.x
+//        let dz = position.z - node.position.z
+//        let angle = atan2(dz, dx)
+//
+//        let rotate = SCNAction.rotateBy(x: 0, y: CGFloat(angle) * CGFloat(Float.pi), z: 0, duration: 1.0)
+//        node.runAction(rotate)
+//
+//        //Seek
+//        let vx = cos(angle) * delta
+//        let vz = sin(angle) * delta
+//
+        let moveAmount = SCNVector3(x: delta/spawnedMovementDifficultyDivider, y: 0.0, z: (slope*delta) / spawnedMovementDifficultyDivider)
+
         let moveAction = SCNAction.move(by: moveAmount, duration: 1.0)
         let repeatForever = SCNAction.repeatForever(moveAction)
         node.runAction(repeatForever)
@@ -444,6 +484,15 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
         SCNTransaction.animationDuration = 0.20
         node.look(at: target)
         SCNTransaction.commit()
+        
+        
+//        let rotate = SCNAction.rotateBy(x: 0, y: CGFloat(Float.pi), z: 0, duration: 1.0)
+//        node.runAction(rotate)
+        
+//        guard let rotation = rotateTransform else{
+//            return
+//        }
+//        node.transform = SCNMatrix4(rotation)
     }
     
     func findSlope(x1:Float, y1:Float, x2:Float, y2:Float) -> Float {
@@ -461,10 +510,25 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     func removeLoadingScreen() {
         // make call on main thread
 //        DispatchQueue.main.async {
-        self.label1.isHidden = true
-        self.label2.isHidden = true
+        self.loadingScreenLabel.isHidden = true
         self.activityIndicator.isHidden = true
 //        }
+    }
+    
+    func displayHowToPlayInstructions() {
+        self.howToPlayInstruction.isHidden = false
+    }
+    
+    func hideHowToPlayInstructions() {
+        self.howToPlayInstruction.isHidden = true
+    }
+    
+    func displayTapToShootInstructions() {
+        self.tapToShootInstruction.isHidden = false
+    }
+    
+    func hideTapToShootInstructions() {
+        self.tapToShootInstruction.isHidden = true
     }
     
     @IBAction func pausePressed(_ sender: UIButton) {
@@ -505,6 +569,7 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     func incScore() {
         currentScore += scoreDifficultyMultiplier
         setScore(score: currentScore)
+        gameHUDOverlay?.incScore(score: scoreDifficultyMultiplier)
     }
     
     func incZombiesCount() {
@@ -518,6 +583,7 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
     func decHealth() {
         currentHealth -= healthDifficultyMultiplier
         setHealth(health: currentHealth)
+        gameHUDOverlay?.decHealth(health: healthDifficultyMultiplier)
     }
     
     func setScore(score: Int) {
@@ -533,6 +599,10 @@ class GameViewController: UIViewController, ARSCNViewDelegate, ARSessionDelegate
             healthText.string = "Health: \(health)"
         }
         healthbar.progress = CGFloat(Float(health)/100)
+    }
+    
+    func displayHealthPenalty() {
+        
     }
     
     func saveScore() {
